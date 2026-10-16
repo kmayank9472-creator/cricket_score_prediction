@@ -1,0 +1,5 @@
+sreamlit
+matplotlib
+pandas
+scikit-learn
+numpy
