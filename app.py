@@ -1,10 +1,9 @@
 
 import streamlit as st
 import pandas as pd
-import pickle
-import os
+import joblib
+from pathlib import Path
 
-# Page configuration
 st.set_page_config(
     page_title="IPL Score Prediction",
     page_icon="🏏",
@@ -12,70 +11,59 @@ st.set_page_config(
 )
 
 st.title("🏏 IPL Score Prediction")
-st.write("Predict Team Runs using Machine Learning")
-st.divider()
+st.write("Machine Learning se score predict karein.")
 
-# Model file path
-MODEL_PATH = "cricket_score_prediction.pkl"
+# Model file load karein
+MODEL_PATH = Path(__file__).with_name(
+    "cricket_score_prediction(1).pkl"
+)
 
-# Load trained model
 @st.cache_resource
 def load_model():
-    with open(MODEL_PATH, "rb") as file:
-        return pickle.load(file)
+    return joblib.load(MODEL_PATH)
 
-# Check model file
-if not os.path.exists(MODEL_PATH):
-    st.error("Model file not found!")
-    st.info("Keep cricket_score_prediction.pkl in the same folder as app.py")
-    st.stop()
-
-# Load model
 try:
     model = load_model()
 except Exception as e:
-    st.error(f"Model loading error: {e}")
+    st.error("Model loading error!")
+    st.code(str(e))
+    st.info(
+        "Model ki .pkl file ko app.py ke same folder mein rakhein."
+    )
     st.stop()
 
-st.subheader("📊 Enter Match Details")
+st.subheader("Match Details")
 
-# Input features
 runs_batter = st.number_input(
-    "Runs Batter",
+    "Batter Runs (runs_batter)",
     min_value=0,
-    max_value=6,
-    value=1,
-    step=1
+    max_value=300,
+    value=45
 )
 
 team_balls = st.number_input(
-    "Team Balls",
-    min_value=0,
-    value=0,
-    step=1
+    "Team Balls (team_balls)",
+    min_value=1,
+    max_value=120,
+    value=60
 )
 
-# Prediction button
-if st.button("🔮 Predict Team Runs", use_container_width=True):
-
+if st.button("Predict Score", type="primary"):
     try:
-        # Feature order must match model training
-        input_data = pd.DataFrame(
+        # Model ke feature names same rakhein
+        features = pd.DataFrame(
             [[runs_batter, team_balls]],
             columns=["runs_batter", "team_balls"]
         )
 
-        prediction = model.predict(input_data)
+        prediction = model.predict(features)[0]
 
-        st.success("Prediction Completed!")
-
+        st.success("Prediction Successful!")
         st.metric(
-            label="Predicted Team Runs",
-            value=f"{float(prediction[0]):.0f} Runs"
+            label="Predicted Score",
+            value=f"{prediction:.2f} Runs"
         )
 
     except Exception as e:
-        st.error(f"Prediction error: {e}")
-
-st.divider()
-st.caption("IPL Score Prediction | Machine Learning Project")
+        st.error("Prediction error!")
+        st.code(str(e))
